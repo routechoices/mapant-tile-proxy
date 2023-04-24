@@ -11,11 +11,11 @@ then
   echo "already running"
  else
   echo "starting"
-  ${BASEDIR}/env/bin/waitress-serve --host 127.0.0.1 --port 19651 index:app &
+  ${BASEDIR}/env/bin/waitress-serve --host 127.0.0.1 --port 19651 index:app > /dev/null 2> /dev/null &
   echo $! > $PID_FILE
  fi
 else
  echo "starting"
- ${BASEDIR}/env/bin/waitress-serve --host 127.0.0.1 --port 19651 index:app &
+ ${BASEDIR}/env/bin/waitress-serve --host 127.0.0.1 --port 19651 index:app > /dev/null 2> /dev/null &
  echo $! > $PID_FILE
 fi
