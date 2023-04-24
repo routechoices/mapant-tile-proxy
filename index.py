@@ -1,13 +1,18 @@
 from flask import Flask, send_file
-from slippy_tiles import tile_xy_to_north_west_latlon, latlon_to_tile_xy
 from pyproj import Transformer
 from io import BytesIO
 from PIL import Image
 import requests
 import numpy as np
 import cv2
+from flask_caching import Cache
+from slippy_tiles import tile_xy_to_north_west_latlon, latlon_to_tile_xy
+
+#cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+
 
 app = Flask(__name__)
+#cache.init_app(app)
 
 wgs82_to_crs3006 = Transformer.from_crs(
     "+proj=latlon",
@@ -52,6 +57,19 @@ def latlon_to_tile_coordinates(lat, lon, z):
     return offset_x, offset_y, tile_x, tile_y
 
 
+def get_gokartor_tile(z, y, x):
+    url = f'https://kartor.gokartor.se/Master/{z}/{y}/{x}.png'
+    res = requests.get(url, stream=True)
+    if res.status_code == 200:
+        data = BytesIO(res.raw.read())
+        return Image.open(data)
+    return None
+
+
+@app.route('/')
+def home():
+    return "hello"
+
 @app.route('/<int:z>/<int:x>/<int:y>.jpg')
 def get_tile(z, x, y):
     north, west = tile_xy_to_north_west_latlon(x, y, z)
@@ -90,12 +108,9 @@ def get_tile(z, x, y):
     im = Image.new(mode="RGB", size=(img_width, img_height))
     for yy in range(tile_min_y, tile_max_y+1):
         for xx in range(tile_min_x, tile_max_x+1):
-            url = f'https://kartor.gokartor.se/Master/{zoom}/{yy}/{xx}.png'
-            res = requests.get(url, stream=True)
-            if res.status_code == 200:
-                data = BytesIO(res.raw.read())
-                temp_img = Image.open(data)
-                Image.Image.paste(im, temp_img, (int(256 * (xx - tile_min_x)), int(256 * (yy - tile_min_y))))
+            tile = get_gokartor_tile(zoom, yy, xx)
+            if tile:
+                Image.Image.paste(im, tile, (int(256 * (xx - tile_min_x)), int(256 * (yy - tile_min_y))))
     coeffs, mask = cv2.findHomography( p2, p1,cv2.RANSAC, 5.0)
     img_alpha = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGRA)
     img = cv2.warpPerspective(

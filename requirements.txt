@@ -4,3 +4,5 @@ opencv-python
 pillow
 pyproj
 requests
+Flask-Caching
+waitress
