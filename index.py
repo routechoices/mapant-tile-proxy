@@ -19,11 +19,6 @@ wgs82_to_crs3006 = Transformer.from_crs(
     "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
 )
 
-crs3006_to_wgs84 = Transformer.from_crs(
-    "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-    "+proj=latlon",
-)
-
 def crs3006_to_tile_xy(x, y, zoom):
     scale = (2.0 ** (zoom)) / ((2**15) * 0.5) / 256
     xtile = int((x - 265000) * scale)
@@ -31,22 +26,19 @@ def crs3006_to_tile_xy(x, y, zoom):
     return (xtile, ytile)
 
 
-def swedish_tile_xy_to_north_west_latlon(x_tile, y_tile, zoom):
+def swedish_tile_xy_to_crs3006_north_west_xy(x_tile, y_tile, zoom):
     scale = (2.0 ** (zoom)) / ((2**15) * 0.5)/256
     x = x_tile / scale + 265000
     y = 7680000 - y_tile / scale 
-    lon, lat = crs3006_to_wgs84.transform(x, y)
-    return (lat, lon)
+    return (x, y)
 
 
 def latlon_to_tile_coordinates(lat, lon, z):
     zoom = z - 2
     x, y = wgs82_to_crs3006.transform(lon, lat)
     tile_x, tile_y = crs3006_to_tile_xy(x, y, zoom)
-    lat_max, lon_min = swedish_tile_xy_to_north_west_latlon(tile_x, tile_y, zoom)
-    lat_min, lon_max = swedish_tile_xy_to_north_west_latlon(tile_x + 1, tile_y + 1, zoom)
-    x_min, y_max = wgs82_to_crs3006.transform(lon_min, lat_max)
-    x_max, y_min = wgs82_to_crs3006.transform(lon_max, lat_min)
+    x_min, y_max = swedish_tile_xy_to_crs3006_north_west_xy(tile_x, tile_y, zoom)
+    x_max, y_min = swedish_tile_xy_to_crs3006_north_west_xy(tile_x + 1, tile_y + 1, zoom)
     
     tile_height = y_max - y_min
     tile_width = x_max - x_min
@@ -65,11 +57,6 @@ def get_gokartor_tile(z, y, x):
         data = BytesIO(res.raw.read())
         return Image.open(data)
     return None
-
-
-@app.route('/')
-def home():
-    return "hello"
 
 @app.route('/<int:z>/<int:x>/<int:y>.jpg')
 @cache.memoize(7*24*3600)
