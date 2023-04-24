@@ -8,11 +8,11 @@ import cv2
 from flask_caching import Cache
 from slippy_tiles import tile_xy_to_north_west_latlon, latlon_to_tile_xy
 
-#cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 
 
 app = Flask(__name__)
-#cache.init_app(app)
+cache.init_app(app)
 
 wgs82_to_crs3006 = Transformer.from_crs(
     "+proj=latlon",
@@ -57,6 +57,7 @@ def latlon_to_tile_coordinates(lat, lon, z):
     return offset_x, offset_y, tile_x, tile_y
 
 
+@cache.memoize(5*60)
 def get_gokartor_tile(z, y, x):
     url = f'https://kartor.gokartor.se/Master/{z}/{y}/{x}.png'
     res = requests.get(url, stream=True)
@@ -71,6 +72,7 @@ def home():
     return "hello"
 
 @app.route('/<int:z>/<int:x>/<int:y>.jpg')
+@cache.memoize(7*24*3600)
 def get_tile(z, x, y):
     north, west = tile_xy_to_north_west_latlon(x, y, z)
     south, east = tile_xy_to_north_west_latlon(x + 1, y + 1, z)
