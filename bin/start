@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASEDIR=$(dirname $DIR)
+PID_FILE=${BASEDIR}/var/wsgi.pid
+if [ -f $PID_FILE ];
+then
+ pid=`cat $PID_FILE`
+ echo "checks PID $pid"
+ if ps -p $pid > /dev/null 2>&1
+ then
+  echo "already running"
+ else
+  echo "starting"
+  ${BASEDIR}/env/bin/waitress-serve --host 127.0.0.1 --port 19651 index:app &
+  echo $! > $PID_FILE
+ fi
+else
+ echo "starting"
+ ${BASEDIR}/env/bin/waitress-serve --host 127.0.0.1 --port 19651 index:app &
+ echo $! > $PID_FILE
+fi
