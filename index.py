@@ -8,9 +8,7 @@ import cv2
 from flask_caching import Cache
 from slippy_tiles import tile_xy_to_north_west_latlon, latlon_to_tile_xy
 
-cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
-
-
+cache = Cache(config={'CACHE_TYPE': 'FileSystemCache', 'CACHE_DIR': 'cache'})
 app = Flask(__name__)
 cache.init_app(app)
 
@@ -221,6 +219,6 @@ def get_tile_ch(z, x, y):
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255, 0),
     )
-    _, buffer = cv2.imencode(".jpeg", img_alpha, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+    _, buffer = cv2.imencode(".jpeg", img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
     data_out = BytesIO(buffer)
     return send_file(data_out, mimetype="image/jpeg")

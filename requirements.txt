@@ -5,5 +5,4 @@ pillow
 pyproj
 requests
 Flask-Caching
-waitress
 gunicorn
