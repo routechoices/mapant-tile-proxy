@@ -221,6 +221,6 @@ def get_tile_ch(z, x, y):
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(255, 255, 255, 0),
     )
-    _, buffer = cv2.imencode(".jpeg", img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+    _, buffer = cv2.imencode(".jpeg", img_alpha, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
     data_out = BytesIO(buffer)
     return send_file(data_out, mimetype="image/jpeg")

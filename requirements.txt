@@ -1,8 +1,9 @@
 flask
 numpy
-opencv-python
+opencv-python-headless
 pillow
 pyproj
 requests
 Flask-Caching
 waitress
+gunicorn
