@@ -1,6 +1,6 @@
 flask
 numpy
-opencv-python-headless
+opencv-python
 pillow
 pyproj
 requests
