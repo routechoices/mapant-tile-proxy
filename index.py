@@ -143,7 +143,7 @@ def get_tile_se(z, x, y):
             [sw_x + (sw_tile_x - tile_min_x) * src_tile_size, sw_y + (sw_tile_y - tile_min_y) * src_tile_size],
         ]
     )
-    im = Image.new(mode="RGB", size=(img_width, img_height))
+    im = Image.new(mode="RGB", size=(img_width, img_height), color=(255, 255, 255))
     for yy in range(tile_min_y, tile_max_y+1):
         for xx in range(tile_min_x, tile_max_x+1):
             tile = get_gokartor_tile(zoom, yy, xx)
@@ -203,7 +203,7 @@ def get_tile_ch(z, x, y):
             [sw_x + (sw_tile_x - tile_min_x) * src_tile_size, sw_y + (sw_tile_y - tile_min_y) * src_tile_size],
         ]
     )
-    im = Image.new(mode="RGB", size=(img_width, img_height))
+    im = Image.new(mode="RGB", size=(img_width, img_height), color=(255, 255, 255))
     for yy in range(tile_min_y, tile_max_y+1):
         for xx in range(tile_min_x, tile_max_x+1):
             tile = get_mapantch_tile(zoom, yy, xx)
