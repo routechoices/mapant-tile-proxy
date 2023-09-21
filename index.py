@@ -222,3 +222,8 @@ def get_tile_ch(z, x, y):
     _, buffer = cv2.imencode(".jpeg", img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
     data_out = BytesIO(buffer)
     return send_file(data_out, mimetype="image/jpeg")
+
+
+@app.route('/')
+def index():
+    return "Map Tile Proxy"
