@@ -6,7 +6,7 @@ import requests
 import numpy as np
 import cv2
 from flask_caching import Cache
-from slippy_tiles import tile_xy_to_north_west_latlon, latlon_to_tile_xy
+from slippy_tiles import tile_xy_to_north_west_latlon, latlon_to_tile_xy, latlon_to_tile_xy_offset
 
 cache = Cache(config={'CACHE_TYPE': 'FileSystemCache', 'CACHE_DIR': 'cache'})
 app = Flask(__name__)
@@ -96,8 +96,19 @@ def get_gokartor_tile(z, y, x):
 @cache.memoize(5*60)
 def get_mapantch_tile(z, y, x):
     url = f'https://www.mapant.ch/wmts.php?layer=MapAnt%20Switzerland&style=default&tilematrixset=2056&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fpng&TileMatrix={z}&TileCol={x}&TileRow={y}'
-    #raise Exception(url)
     res = requests.get(url, stream=True)
+    if res.status_code == 200:
+        data = BytesIO(res.raw.read())
+        return Image.open(data)
+    return None
+
+
+@cache.memoize(60*60)
+def get_osm_tile(z, y, x):
+    url = f"https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    session = requests.Session()    
+    session.headers.update({'User-Agent': 'Routechoices.com Tiles Proxy App'})
+    res = session.get(url, stream=True)
     if res.status_code == 200:
         data = BytesIO(res.raw.read())
         return Image.open(data)
@@ -221,6 +232,39 @@ def get_tile_ch(z, x, y):
     )
     _, buffer = cv2.imencode(".jpeg", img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
     data_out = BytesIO(buffer)
+    return send_file(data_out, mimetype="image/jpeg")
+
+
+@app.route('/garmin/<int:z>/<float:lat>/<float:lng>.jpg')
+def get_image_at_location(z, lat, lng):
+    x, y = latlon_to_tile_xy(lat, lng, z)
+    x_offset, y_offset = latlon_to_tile_xy_offset(lat, lng, z)
+    if x_offset < 128:
+        x_min = x - 1
+        x_max = x
+        x_offset += 256
+    else:
+        x_min = x
+        x_max = x + 1
+    if y_offset < 128:
+        y_min = y - 1
+        y_max = y
+        y_offset += 256
+    else:
+        y_min = y
+        y_max = y + 1
+    final_image = Image.new(mode="RGB", size=(256, 256), color=(255, 255, 255))
+    for i in range(2):
+        for j in range(2):
+            xx = x_min + i
+            yy = y_min + j
+            paste_xy = (int((256 * i) - x_offset + 128), int((256 * j) - y_offset + 128))
+            tile = get_osm_tile(z, yy, xx)
+            if tile:    
+                Image.Image.paste(final_image, tile, paste_xy)
+    data_out = BytesIO()
+    final_image.save(data_out, "JPEG")
+    data_out.seek(0)
     return send_file(data_out, mimetype="image/jpeg")
 
 
