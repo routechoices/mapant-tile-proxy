@@ -5,4 +5,4 @@ pillow
 pyproj
 requests
 Flask-Caching
-gunicorn
+granian
